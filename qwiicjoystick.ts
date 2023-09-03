@@ -9,7 +9,7 @@ https://github.com/sparkfun/Qwiic_Joystick
 https://github.com/sparkfun/Qwiic_Joystick_Py
 https://github.com/sparkfun/Qwiic_Joystick/blob/master/Firmware/Python%20Examples/Example%201%20-%20Basic%20Readings/Qwiic_Joystick.py
 
-
+Code anhand der Python library neu programmiert von Lutz Elßner im September 2023
 */ {
     export enum eADDR { Joystick = 0x20 }
 
@@ -142,6 +142,19 @@ https://github.com/sparkfun/Qwiic_Joystick/blob/master/Firmware/Python%20Example
     export function clearButtonStatus(pADDR: number) {
         writeRegister(pADDR, eRegister.STATUS, 0)
     }
+
+
+    // ========== group="Joystick als Text lesen"
+
+    //% group="Joystick als Text lesen H V B S"
+    //% block="i2c %pADDR Bereich %pBereich als Text"
+    //% pBereich.defl=qwiicjoystick.eBereich.D_100_100
+    //% pADDR.shadow="qwiicjoystick_eADDR"
+    export function statuszeile(pADDR: number, pBereich: eBereich): string {
+        let a = readArray(pADDR, pBereich)
+        return a.get(0) + "!" + a.get(1) + "!" + a.get(2) + "!" + a.get(3)
+    }
+
 
 
 
