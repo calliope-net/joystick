@@ -1,7 +1,7 @@
 
-//% color=#BF3F7F icon="\uf08d" block="Joystick" weight=07
+//% color=#BF3F7F icon="\uf08d" block="Joystick" weight=09
 namespace qwiicjoystick
-/* 230903
+/* 230903 https://github.com/calliope-net/joystick
 SparkFun Qwiic Joystick
 https://learn.sparkfun.com/tutorials/qwiic-joystick-hookup-guide#resources-and-going-further
 
