@@ -1,7 +1,7 @@
 
 //% color=#BF3F7F icon="\uf08d" block="Joystick" weight=09
 namespace qwiicjoystick
-/* 230903 https://github.com/calliope-net/joystick
+/* 230903 231011 https://github.com/calliope-net/joystick
 SparkFun Qwiic Joystick
 https://learn.sparkfun.com/tutorials/qwiic-joystick-hookup-guide#resources-and-going-further
 
@@ -11,7 +11,9 @@ https://github.com/sparkfun/Qwiic_Joystick/blob/master/Firmware/Python%20Example
 
 Code anhand der Python library neu programmiert von Lutz Elßner im September 2023
 */ {
-    export enum eADDR { Joystick = 0x20 }
+    export enum eADDR { Joystick_x20 = 0x20 }
+    let n_i2cCheck: boolean = false // i2c-Check
+    let n_i2cError: number = 0 // Fehlercode vom letzten WriteBuffer (0 ist kein Fehler)
 
     export enum eRegister {     // Register codes for the Joystick
         ID = 0x00,              // Default I2C Slave Address from EEPROM
@@ -31,8 +33,15 @@ Code anhand der Python library neu programmiert von Lutz Elßner im September 20
         CHANGE_ADDREESS = 0x0A  // Current/Set I2C Slave Address (Write). Stored in EEPROM.
     }
 
-    let m_i2cWriteBufferError: number = 0 // Fehlercode vom letzten WriteBuffer (0 ist kein Fehler)
+    //let m_i2cWriteBufferError: number = 0 // Fehlercode vom letzten WriteBuffer (0 ist kein Fehler)
 
+    //% group="beim Start"
+    //% block="i2c-Check %ck"
+    //% ck.shadow="toggleOnOff" ck.defl=1
+    export function beimStart(ck: boolean) {
+        n_i2cCheck = ck
+        n_i2cError = 0 // Reset Fehlercode
+    }
 
     // ========== group="Joystick in Array lesen 0:H 1:V 2:Button 3:Button-Status"
 
@@ -97,9 +106,9 @@ Code anhand der Python library neu programmiert von Lutz Elßner im September 20
     }
 
 
-    // ========== group="Joystick Position"
+    // ========== group="Joystick Position (0..512..1023)"
 
-    //% group="Joystick Position"
+    //% group="Joystick Position (0..512..1023)"
     //% block="i2c %pADDR horizontal X Position" weight=4
     //% pADDR.shadow="qwiicjoystick_eADDR"
     export function horizontal(pADDR: number) {
@@ -107,7 +116,7 @@ Code anhand der Python library neu programmiert von Lutz Elßner im September 20
         return bu.getNumber(NumberFormat.UInt16BE, 0) / 64
     }
 
-    //% group="Joystick Position"
+    //% group="Joystick Position (0..512..1023)"
     //% block="i2c %pADDR vertical Y Position" weight=2
     //% pADDR.shadow="qwiicjoystick_eADDR"
     export function vertical(pADDR: number) {
@@ -180,8 +189,8 @@ Code anhand der Python library neu programmiert von Lutz Elßner im September 20
     export function readRegister(pADDR: number, pRegister: eRegister) {
         let bu = Buffer.create(1)
         bu.setUint8(0, pRegister)
-        m_i2cWriteBufferError = pins.i2cWriteBuffer(pADDR, bu, true)
-        return pins.i2cReadBuffer(pADDR, 1).getUint8(0)
+        i2cWriteBuffer(pADDR, bu, true)
+        return i2cReadBuffer(pADDR, 1).getUint8(0)
     }
 
     //% group="i2c Register" advanced=true
@@ -191,8 +200,8 @@ Code anhand der Python library neu programmiert von Lutz Elßner im September 20
     export function readBuffer(pADDR: number, pRegister: eRegister, size: number): Buffer {
         let bu = Buffer.create(1)
         bu.setUint8(0, pRegister)
-        m_i2cWriteBufferError = pins.i2cWriteBuffer(pADDR, bu, true)
-        return pins.i2cReadBuffer(pADDR, size)
+        i2cWriteBuffer(pADDR, bu, true)
+        return i2cReadBuffer(pADDR, size)
     }
 
     //% group="i2c Register" advanced=true
@@ -203,7 +212,7 @@ Code anhand der Python library neu programmiert von Lutz Elßner im September 20
         let bu = Buffer.create(2)
         bu.setUint8(0, pRegister)
         bu.setUint8(1, value)
-        m_i2cWriteBufferError = pins.i2cWriteBuffer(pADDR, bu)
+        i2cWriteBuffer(pADDR, bu)
     }
 
     //% blockId=qwiicjoystick_eRegister
@@ -221,7 +230,24 @@ Code anhand der Python library neu programmiert von Lutz Elßner im September 20
     export function qwiicjoystick_eADDR(pADDR: eADDR): number { return pADDR }
 
     //% group="i2c Adressen" advanced=true
-    //% block="Fehlercode vom letzten WriteBuffer (0 ist kein Fehler)" weight=2
-    export function i2cError() { return m_i2cWriteBufferError }
+    //% block="i2c Fehlercode" weight=2
+    export function i2cError() { return n_i2cError }
+
+    function i2cWriteBuffer(pADDR: number, buf: Buffer, repeat: boolean = false) {
+        if (n_i2cError == 0) { // vorher kein Fehler
+            n_i2cError = pins.i2cWriteBuffer(pADDR, buf, repeat)
+            if (n_i2cCheck && n_i2cError != 0)  // vorher kein Fehler, wenn (n_i2cCheck=true): beim 1. Fehler anzeigen
+                basic.showString(Buffer.fromArray([pADDR]).toHex()) // zeige fehlerhafte i2c-Adresse als HEX
+        } else if (!n_i2cCheck)  // vorher Fehler, aber ignorieren (n_i2cCheck=false): i2c weiter versuchen
+            n_i2cError = pins.i2cWriteBuffer(pADDR, buf, repeat)
+        //else { } // n_i2cCheck=true und n_i2cError != 0: weitere i2c Aufrufe blockieren
+    }
+
+    function i2cReadBuffer(pADDR: number, size: number, repeat: boolean = false): Buffer {
+        if (!n_i2cCheck || n_i2cError == 0)
+            return pins.i2cReadBuffer(pADDR, size, repeat)
+        else
+            return Buffer.create(size)
+    }
 
 } // qwiicjoystick.ts
