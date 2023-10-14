@@ -168,8 +168,28 @@ Code anhand der Python library neu programmiert von Lutz Elßner im September 20
 
 
 
-
     // ========== advanced=true
+
+
+    //% group="Joystick (0 .. 128 .. 255) für Fernsteuerung" advanced=true
+    //% block="i2c %pADDR in UInt32LE lesen" weight=4
+    //% pADDR.shadow="qwiicjoystick_eADDR"
+    export function readJoystick(pADDR: number): number {
+        let bu_ret = Buffer.create(4)
+
+        i2cWriteBuffer(pADDR, Buffer.fromArray([3]), true) // Joystick Register ab Nummer 3
+
+        let bu_joy = i2cReadBuffer(pADDR, 6) // Joystick 6 Register 3-8 lesen
+
+        bu_ret.setUint8(0, bu_joy.getUint8(0)) // Register 3: Horizontal MSB 8 Bit
+        bu_ret.setUint8(1, bu_joy.getUint8(2)) // Register 5: Vertical MSB 8 Bit
+        bu_ret.setUint8(2, bu_joy.getUint8(4)) // Register 7: Current Button Position (0:gedrückt)
+        bu_ret.setUint8(3, bu_joy.getUint8(5)) // Register 8: Button STATUS (1:war gedrückt)
+
+        return bu_ret.getNumber(NumberFormat.UInt32LE, 0)
+    }
+
+
 
     // ========== group="Nullstelle Abweichung von-bis als Nullwert werten"
 
