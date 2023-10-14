@@ -33,14 +33,16 @@ Code anhand der Python library neu programmiert von Lutz Elßner im September 20
         CHANGE_ADDREESS = 0x0A  // Current/Set I2C Slave Address (Write). Stored in EEPROM.
     }
 
-    //let m_i2cWriteBufferError: number = 0 // Fehlercode vom letzten WriteBuffer (0 ist kein Fehler)
 
     //% group="beim Start"
-    //% block="i2c-Check %ck"
+    //% block="i2c %pADDR beim Start || i2c-Check %ck"
+    //% pADDR.shadow="qwiicjoystick_eADDR"
     //% ck.shadow="toggleOnOff" ck.defl=1
-    export function beimStart(ck: boolean) {
-        n_i2cCheck = ck
+    export function beimStart(pADDR: number, ck?: boolean) {
+        n_i2cCheck = (ck ? true : false) // optionaler boolean Parameter kann undefined sein
         n_i2cError = 0 // Reset Fehlercode
+
+        i2cWriteBuffer(pADDR, Buffer.fromArray([eRegister.STATUS, 0])) // (8) Status 'Button war gedrückt' löschen
     }
 
     // ========== group="Joystick in Array lesen 0:H 1:V 2:Button 3:Button-Status"
@@ -140,7 +142,7 @@ Code anhand der Python library neu programmiert von Lutz Elßner im September 20
     export function button(pADDR: number, pButton: eButton): boolean {
         switch (pButton) {
             case eButton.BUTTON: return readRegister(pADDR, eRegister.BUTTON) == 0
-            case eButton.BUTTON: return readRegister(pADDR, eRegister.STATUS) == 1
+            case eButton.STATUS: return readRegister(pADDR, eRegister.STATUS) == 1
             default: return false
         }
     }
