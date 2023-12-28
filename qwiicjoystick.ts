@@ -14,6 +14,7 @@ Code anhand der Python library neu programmiert von Lutz Elßner im September 20
     export enum eADDR { Joystick_x20 = 0x20 }
     let n_i2cCheck: boolean = false // i2c-Check
     let n_i2cError: number = 0 // Fehlercode vom letzten WriteBuffer (0 ist kein Fehler)
+    let n_SendeZahl: Buffer = Buffer.create(4)
 
     export enum eRegister {     // Register codes for the Joystick
         ID = 0x00,              // Default I2C Slave Address from EEPROM
@@ -194,6 +195,33 @@ Code anhand der Python library neu programmiert von Lutz Elßner im September 20
         bu_ret.setUint8(3, bu_joy.getUint8(5)) // Register 8: Button STATUS (1:war gedrückt)
 
         return bu_ret.getNumber(NumberFormat.UInt32LE, 0)
+    }
+
+
+
+    // ========== group="Fernsteuerung"
+
+    export enum eOffset {
+        //% block="0"
+        z0 = 0,
+        //% block="1"
+        z1 = 1,
+        //% block="2"
+        z2 = 2,
+        //% block="3"
+        z3 = 3
+    }
+
+    //% group="Fernsteuerung" advanced=true
+    //% block="setSendeZahl %pNumberFormat %pOffset %pValue" weight=4
+    export function setSendeZahl(pNumberFormat: NumberFormat, pOffset: eOffset, pValue: number) {
+        n_SendeZahl.setNumber(pNumberFormat, pOffset, pValue)
+    }
+
+    //% group="Fernsteuerung" advanced=true
+    //% block="getSendeZahl UInt32LE" weight=2
+    export function getSendeZahl() {
+        return n_SendeZahl.getNumber(NumberFormat.UInt32LE, 0)
     }
 
 
