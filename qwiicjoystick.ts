@@ -168,6 +168,11 @@ Code anhand der Python library neu programmiert von Lutz Elßner im September 20
     }
 
 
+    //% group="Kommentar"
+    //% block="// %text" weight=4
+    export function comment(text: string): void { }
+
+
 
     // ========== advanced=true
 
